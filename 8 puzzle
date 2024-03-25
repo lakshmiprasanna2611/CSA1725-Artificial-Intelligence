@@ -1,0 +1,82 @@
+from collections import deque
+
+class PuzzleState:
+    def __init__(self, state, parent=None, move=None):
+        self.state = state
+        self.parent = parent
+        self.move = move
+
+    def __eq__(self, other):
+        return self.state == other.state
+
+    def __hash__(self):
+        return hash(str(self.state))
+
+    def find_blank(self):
+        for i in range(3):
+            for j in range(3):
+                if self.state[i][j] == 0:
+                    return i, j
+
+    def possible_moves(self):
+        i, j = self.find_blank()
+        moves = []
+        if i > 0:
+            moves.append((-1, 0))
+        if i < 2:
+            moves.append((1, 0))
+        if j > 0:
+            moves.append((0, -1))
+        if j < 2:
+            moves.append((0, 1))
+        return moves
+
+    def swap(self, i1, j1, i2, j2):
+        new_state = [list(row) for row in self.state]
+        new_state[i1][j1], new_state[i2][j2] = new_state[i2][j2], new_state[i1][j1]
+        return new_state
+
+    def apply_move(self, move):
+        i, j = self.find_blank()
+        di, dj = move
+        return PuzzleState(self.swap(i, j, i+di, j+dj), self, move)
+
+    def solved(self):
+        return self.state == [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
+
+    def print_path(self):
+        if self.parent:
+            self.parent.print_path()
+        print(self)
+        print()
+
+    def __str__(self):
+        return '\n'.join([' '.join(map(str, row)) for row in self.state]) + '\n'
+
+
+def solve(start):
+    queue = deque([start])
+    visited = set([start])
+
+    while queue:
+        current = queue.popleft()
+        if current.solved():
+            return current
+
+        for move in current.possible_moves():
+            next_state = current.apply_move(move)
+            if next_state not in visited:
+                queue.append(next_state)
+                visited.add(next_state)
+
+    return None
+
+if __name__ == "__main__":
+    initial_state = [[1, 2, 3], [0, 4, 6], [7, 5, 8]]  # Initial state of the puzzle
+    start = PuzzleState(initial_state)
+    solution = solve(start)
+    if solution:
+        print("Solution found:")
+        solution.print_path()
+    else:
+        print("No solution found.")
